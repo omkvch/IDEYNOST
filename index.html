@@ -4,14 +4,25 @@
 <title>Shorts</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#000;--card:#1c1c1e;--line:#2c2c2e;--tx:#fff;--mu:#8e8e93;--ac:#0a84ff}
-:root.light{--bg:#f2f2f7;--card:#fff;--line:#e5e5ea;--tx:#000;--mu:#6c6c70;--ac:#007aff}
+:root{--ac:#0a84ff;--bg:#06070a;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.1);--inp:rgba(0,0,0,.3);--tx:#fff;--mu:#9a9aa3}
+:root.light{--bg:#eceef4;--card:rgba(255,255,255,.72);--line:rgba(0,0,0,.08);--inp:rgba(255,255,255,.7);--tx:#000;--mu:#6c6c70}
+:root{--bgs:color-mix(in srgb,var(--ac) 9%,var(--bg))}
 *{box-sizing:border-box}
-body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 36px) 16px calc(env(safe-area-inset-bottom) + 150px);max-width:760px}
-h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 18px}
-.card{background:var(--card);border-radius:20px;padding:14px;margin-bottom:12px}
-textarea,input,select{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;resize:vertical;min-width:0}
+html{background:var(--bgs)}
+body{margin:0 auto;color:var(--tx);font:16px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 64px) 16px calc(env(safe-area-inset-bottom) + 170px);max-width:760px}
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.bg i{position:absolute;width:75vmax;height:75vmax;border-radius:50%;background:radial-gradient(circle,var(--ac),transparent 65%);opacity:.05;animation:fl 7s ease-in-out infinite}
+.bg i:nth-child(1){top:-30vmax;left:-25vmax}.bg i:nth-child(2){bottom:-35vmax;right:-30vmax;animation-delay:-2.5s}
+.bg i:nth-child(3){top:35%;left:30%;width:50vmax;height:50vmax;animation-delay:-5s}
+.bg b{position:absolute;inset:0;opacity:.08;mix-blend-mode:overlay;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.noanim .bg i{animation:none}
+@keyframes fl{0%,100%{opacity:.03}50%{opacity:.07}}
+@keyframes up{from{opacity:0;transform:translateY(8px)}}
+h1{font-size:44px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.05em;line-height:.95;margin:0 0 22px;text-shadow:-2px 0 0 var(--bgs),2px 0 0 var(--bgs);animation:up .4s ease both}
+.card{background:var(--card);border:1px solid var(--line);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border-radius:22px;padding:14px;margin-bottom:12px}
+textarea,input,select{width:100%;background:var(--inp);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font:inherit;resize:vertical;min-width:0}
 input[type=number]{width:80px}
+input[type=checkbox]{width:22px;height:22px;flex:none;margin:2px 0 0;accent-color:var(--ac)}
 .row{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
 .row select{flex:1}
 button,a.g{font:inherit;font-weight:600;border:0;border-radius:14px;padding:10px 16px;background:var(--line);color:var(--tx);cursor:pointer;text-decoration:none;display:inline-block}
@@ -21,6 +32,7 @@ button:disabled{opacity:.5}
 .p{background:var(--ac);color:#fff;margin-left:auto}
 .wide{width:100%;margin:0}
 .d{color:#ff453a;margin-left:auto}
+.sw{width:34px;height:34px;border-radius:50%;padding:0;border:2px solid var(--line)}
 summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .tag{font-size:13px;font-weight:500;color:var(--mu);white-space:nowrap}
 .tag.good,.st-published,.st-approved{color:#30d158}.tag.bad,.st-rejected{color:#ff453a}
@@ -31,16 +43,24 @@ label{display:block;margin:0 0 6px}
 .bar i{display:block;height:100%;background:var(--ac)}
 .vo{font-weight:700;margin:6px 0}
 .sb{color:#ff453a;font-size:12px;margin:2px 0}
-input[type=checkbox]{width:22px;height:22px;flex:none;margin:2px 0 0;accent-color:var(--ac)}
-.bulk{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:736px;bottom:calc(env(safe-area-inset-bottom) + 62px);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.glass{background:color-mix(in srgb,var(--bg) 55%,transparent);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,0,0,.3)}
+.bulk{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:736px;bottom:calc(env(safe-area-inset-bottom) + 88px);border-radius:20px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
 .bulk[hidden]{display:none}
-nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:2px;padding:8px 8px calc(env(safe-area-inset-bottom) + 8px);background:var(--bg);border-top:1px solid var(--line)}
-nav button{flex:1;background:none;color:var(--mu);padding:8px 0;font-size:13px}
+nav{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:736px;bottom:calc(env(safe-area-inset-bottom) + 10px);display:flex;padding:6px;border-radius:26px}
+nav button{flex:1;background:none;color:var(--mu);padding:6px 0;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
 nav button.on{color:var(--ac)}
+nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 </style></head><body>
+<div class="bg"><i></i><i></i><i></i><b></b></div>
 <div id="v"></div>
-<div id="bulk" class="bulk" hidden></div>
-<nav><button data-t="ideas">Идеи</button><button data-t="videos">Видео</button><button data-t="gen">Сценарий</button><button data-t="train">Обучение</button><button data-t="news">Новости</button></nav>
+<div id="bulk" class="bulk glass" hidden></div>
+<nav class="glass">
+<button data-t="ideas"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Идеи</button>
+<button data-t="videos"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></svg>Видео</button>
+<button data-t="gen"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/></svg>Сценарий</button>
+<button data-t="train"><svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5zM12 4h6.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H12"/></svg>Обучение</button>
+<button data-t="news"><svg viewBox="0 0 24 24"><path d="M5 5h11v14H6a1 1 0 0 1-1-1zM16 9h3v9a1 1 0 0 1-1 1h-2M8 9h5M8 12h5M8 15h3"/></svg>Новости</button>
+</nav>
 <script>
 window.onerror=m=>{document.getElementById("v").innerHTML='<p style="color:#ff453a;padding:12px">Ошибка в приложении: '+m+'</p>'};
 const tg=(window.Telegram&&Telegram.WebApp)||{
@@ -48,15 +68,26 @@ const tg=(window.Telegram&&Telegram.WebApp)||{
   ready(){},expand(){},showAlert:m=>alert(m),showConfirm:(m,cb)=>cb(confirm(m)),
   HapticFeedback:{notificationOccurred(){}}};
 tg.ready();tg.expand();
-if(tg.colorScheme==="light")document.documentElement.classList.add("light");
+const LS={get(k,d){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+function applyLook(){
+  const r=document.documentElement,th=LS.get("th","auto");
+  r.style.setProperty("--ac",LS.get("ac","#0a84ff"));
+  r.classList.toggle("light",th==="light"||(th==="auto"&&tg.colorScheme==="light"));
+  r.classList.toggle("noanim",LS.get("an","1")==="0");
+}
+applyLook();
+const lookCard=()=>`<div class="card"><label>Оформление</label><div class="row" style="margin:0">
+  ${["#0a84ff","#30d158","#bf5af2","#ff9f0a","#64d2ff","#ff375f"].map(c=>`<button class="sw" style="background:${c}" data-ac="${c}"></button>`).join("")}</div>
+  <div class="row">${[["auto","Авто"],["dark","Тёмная"],["light","Светлая"]].map(([k,t])=>`<button class="g ${LS.get("th","auto")===k?"on":""}" data-th="${k}">${t}</button>`).join("")}
+  <button class="g ${LS.get("an","1")==="1"?"on":""}" data-an="1">Анимация фона</button></div></div>`;
 const API="https://afwmqjspshnuzcdgcqxa.supabase.co/functions/v1/smooth-handler";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const R={good:"Зашёл",ok:"Средне",bad:"Не зашёл"};
 const GAMES={"":"Обе игры",arizona:"Arizona",grand:"Grand"};
-const ST={idea:"Идея",writing:"Пишу",review:"На апруве",rejected:"Отклонена",approved:"Одобрена",filmed:"Снято",edited:"Смонтировано",published:"Выложено"};
+const ST={idea:"Идея",later:"Отложена",writing:"Пишу",review:"На апруве",rejected:"Отклонена",approved:"Одобрена",filmed:"Снято",edited:"Смонтировано",published:"Выложено"};
 let S={scripts:[],news:[],ideas:[],sources:[],settings:{style_notes:"",glossary:"",formats:"",limits:"",goal_arizona:4,goal_grand:3}};
-let tab="ideas",last="",pre="",cur=null,ed=false,sec=40,vf="",F={game:"",format:"",n:20},SEL=new Set(),O={src:false};
+let tab="ideas",last="",pre="",cur=null,ed=false,sec=40,vf="",IV="idea",F={game:"",format:"",n:20},SEL=new Set(),O={src:false};
 
 async function call(action,data={}){
   const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json","x-init-data":tg.initData},body:JSON.stringify({action,...data})});
@@ -85,8 +116,9 @@ const weekStart=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate(
 const wk=g=>S.ideas.filter(i=>i.status==="published"&&i.done_at&&new Date(i.done_at)>=weekStart()&&(!g||i.game===g)).length;
 
 // Озвучка капсом, раскадровка (строки в квадратных скобках) мелким красным
-const isSb=l=>/^\s*\[/.test(l);
+const isSb=l=>/^\s*[\[*]/.test(l);
 const lines=t=>t.split("\n").filter(l=>l.trim());
+const dur=t=>Math.round(lines(t).filter(l=>!isSb(l)).join(" ").split(/\s+/).filter(Boolean).length/2.5);
 const scriptHtml=t=>lines(t).map(l=>isSb(l)?`<div class="sb">${esc(l)}</div>`:`<div class="vo">${esc(l.toUpperCase())}</div>`).join("");
 const scriptRich=t=>lines(t).map(l=>isSb(l)?`<p style="margin:0;color:#ff0000;font-size:9pt">${esc(l)}</p>`:`<p style="margin:0;font-weight:bold">${esc(l.toUpperCase())}</p>`).join("");
 const scriptPlain=t=>t.split("\n").map(l=>isSb(l)?l:l.toUpperCase()).join("\n");
@@ -102,6 +134,11 @@ async function saveScript(status){
   else{cur=(await call("idea_add",{title:first(pre||last),angle:pre,script:last,game:F.game,format:F.format,status:status||"writing",source:"manual"})).id}
   await load();
 }
+async function rewrite(instr){
+  grab();if(ed&&$("#res"))last=$("#res").value;
+  last=(await call("generate",{idea:pre,sec,game:F.game,format:F.format?fname(F.format):"",script:last,revise:instr})).text;
+  ed=false;cur?await saveScript():render();
+}
 function openIdea(id){
   const i=S.ideas.find(x=>x.id===id);
   pre=[i.title,i.summary,i.angle].filter(Boolean).join("\n");cur=id;last=i.script||"";ed=false;
@@ -110,7 +147,7 @@ function openIdea(id){
 
 function updateBulk(){
   const b=$("#bulk"),ids=[...SEL].filter(id=>S.ideas.some(i=>i.id===id&&i.status==="idea"));
-  b.hidden=!(tab==="ideas"&&ids.length);if(b.hidden)return;
+  b.hidden=!(tab==="ideas"&&IV==="idea"&&ids.length);if(b.hidden)return;
   b.innerHTML=`<b>Выбрано: ${ids.length}</b><span class="row" style="margin:0"><button class="g" id="bc">Снять</button><button class="g on" id="bw">Писать сценарии</button></span>`;
   $("#bc").onclick=()=>{SEL.clear();render()};
   $("#bw").onclick=e=>run(e.target,()=>batchWrite(ids,e.target));
@@ -133,33 +170,36 @@ async function batchWrite(ids,btn){
 
 const V={
 ideas(v){
-  const list=S.ideas.filter(i=>i.status==="idea");
-  const card=i=>`<details class="card"><summary><input type="checkbox" data-ck="${i.id}"${SEL.has(i.id)?" checked":""}>
+  const list=S.ideas.filter(i=>i.status===IV),arch=S.ideas.filter(i=>i.status==="later").length;
+  const card=i=>`<details class="card"><summary>${IV==="idea"?`<input type="checkbox" data-ck="${i.id}"${SEL.has(i.id)?" checked":""}>`:""}
   <div style="flex:1"><b>${esc(i.title)}</b><div class="mu">${esc(i.summary)}</div><div class="tag">${esc(i.format?fname(i.format):"")}</div></div></summary>
   ${i.angle?`<p class="body">${esc(i.angle)}</p>`:""}
-  <div class="row"><button class="g on" data-sc="${i.id}">В сценарий</button><button class="g d" data-di="${i.id}">Удалить</button></div></details>`;
+  <div class="row"><input placeholder="Что изменить в идее"><button class="g" data-rw="${i.id}">Переписать</button></div>
+  <div class="row">${IV==="idea"?`<button class="g on" data-sc="${i.id}">В сценарий</button><button class="g" data-lt="${i.id}">Отложить</button>`:`<button class="g on" data-bk="${i.id}">Вернуть в идеи</button>`}
+  <button class="g d" data-di="${i.id}">Удалить</button></div></details>`;
   const grp=(k,t)=>{const l=list.filter(i=>k?i.game===k:!["arizona","grand"].includes(i.game));
-    return l.length?`<div class="row" style="justify-content:space-between;margin:14px 0 8px"><b>${t} · ${l.length}</b><button class="g" data-all="${k}">Выбрать все</button></div>`+l.map(card).join(""):""};
+    return l.length?`<div class="row" style="justify-content:space-between;margin:14px 0 8px"><b>${t} · ${l.length}</b>${IV==="idea"?`<button class="g" data-all="${k}">Выбрать все</button>`:""}</div>`+l.map(card).join(""):""};
   v.innerHTML=`<h1>Идеи</h1><div class="card"><div class="row" style="margin:0"><input id="qn" placeholder="Быстрая заметка: мысль для видео"><button class="g on" id="qa">Записать</button></div></div>
   <div class="card"><div class="row" style="margin:0">${gameSel()}${fmtSel()}${sel("fn",[["10","10 идей"],["20","20 идей"],["30","30 идей"]],String(F.n))}</div>
   <div class="row"><textarea id="hint" rows="2" placeholder="Свой повод или пожелание, например: пранк с участием друга (необязательно)"></textarea></div>
   <div class="row"><button class="g" id="gn">По новостям</button><button class="p" id="gv">Придумать идеи</button></div>
   <p class="mu" style="margin:10px 0 0">Если игра не выбрана, идеи делятся поровну: половина Arizona, половина Grand. Генерация занимает до минуты.</p></div>
-  ${list.length?`<div class="row" style="justify-content:space-between;margin:0 0 4px"><span class="mu">Идей в списке: ${list.length}</span><button class="g d" id="sk">Убрать невыбранные</button></div>`:""}`+
+  <div class="row" style="margin:0 0 4px"><button class="g ${IV==="idea"?"on":""}" data-iv="idea">Идеи</button><button class="g ${IV==="later"?"on":""}" data-iv="later">Архив ${arch}</button>
+  ${IV==="idea"&&list.length?`<button class="g d" id="sk">Убрать невыбранные</button>`:""}</div>`+
   grp("arizona","Arizona")+grp("grand","Grand")+grp("","Без игры");
   $("#qa").onclick=e=>run(e.target,async()=>{const t=$("#qn").value.trim();if(!t)return;grab();
     await call("idea_add",{title:t,game:F.game,source:"note"});await load();$("#qn").focus()});
   $("#qn").onkeydown=e=>{if(e.key==="Enter")$("#qa").click()};
   const gen=mode=>e=>run(e.target,async()=>{grab();
-    await call("ideas",{mode,game:F.game,format:F.format,hint:$("#hint").value,n:mode==="news"?8:+F.n});await load()});
+    await call("ideas",{mode,game:F.game,format:F.format,hint:$("#hint").value,n:mode==="news"?8:+F.n});IV="idea";await load()});
   $("#gn").onclick=gen("news");$("#gv").onclick=gen("creative");
   if($("#sk"))$("#sk").onclick=()=>tg.showConfirm(SEL.size?"Убрать все невыбранные идеи?":"Убрать все идеи из списка?",
     ok=>{if(ok)call("ideas_skip",{keep:[...SEL]}).then(load).catch(x=>tg.showAlert(x.message))});
 },
 videos(v){
   const gA=+S.settings.goal_arizona||0,gG=+S.settings.goal_grand||0,done=wk();
-  const list=S.ideas.filter(i=>i.status!=="idea"&&i.status!=="skipped"&&(!vf||i.status===vf));
-  const vs=Object.entries(ST).filter(([k])=>k!=="idea");
+  const list=S.ideas.filter(i=>!["idea","skipped","later"].includes(i.status)&&(!vf||i.status===vf));
+  const vs=Object.entries(ST).filter(([k])=>!["idea","later"].includes(k));
   v.innerHTML=`<h1>Видео</h1><div class="card"><div class="row" style="margin:0;justify-content:space-between"><b>Неделя: ${done} из ${gA+gG}</b>
   <span class="tag">Arizona ${wk("arizona")}/${gA} · Grand ${wk("grand")}/${gG}</span></div>
   <div class="bar"><i style="width:${gA+gG?Math.min(100,done/(gA+gG)*100):0}%"></i></div></div>
@@ -178,10 +218,10 @@ gen(v){
   <div class="row"><textarea id="idea" rows="5" placeholder="Идея: о чём видео">${esc(pre)}</textarea></div>
   <div class="row"><input id="sec" type="number" value="${sec}" min="15" max="90"><span class="mu">секунд</span><button class="p" id="gen">Написать</button></div></div>`+
   (last?`<div class="card">${ed?`<textarea id="res" rows="16">${esc(last)}</textarea>`:`<div>${scriptHtml(last)}</div>`}
-  <div class="row"><button class="g" id="ted">${ed?"Готово":"Править текстом"}</button><button class="g" id="cp">Копировать</button>
+  <div class="mu" style="margin-top:10px">≈ ${dur(last)} сек озвучки, цель ${sec} сек</div><div class="row"><button class="g" data-len="-">Короче</button><button class="g" data-len="+">Длиннее</button><button class="g" id="ted">${ed?"Готово":"Править текстом"}</button><button class="g" id="cp">Копировать</button>
   <button class="g" id="sv">Сохранить</button><button class="g on" id="ap">На апрув</button></div></div>
   <div class="card"><label>Что поправить в сценарии</label><textarea id="rv" rows="2" placeholder="Например: сделай хук жёстче, а концовку смешнее"></textarea>
-  <div class="row">${["Короче","Жёстче хук","Смешнее","Другая концовка"].map(t=>`<button class="g" data-q="${t}">${t}</button>`).join("")}<button class="p" id="rw">Переписать</button></div></div>`:"");
+  <div class="row">${["Жёстче хук","Смешнее","Другая концовка"].map(t=>`<button class="g" data-q="${t}">${t}</button>`).join("")}<button class="p" id="rw">Переписать</button></div></div>`:"");
   $("#idea").oninput=e=>pre=e.target.value;
   const make=revise=>e=>run(e.target,async()=>{grab();
     if(ed&&$("#res"))last=$("#res").value;
@@ -215,7 +255,7 @@ news(v){
 train(v){
   const s=S.settings;
   v.innerHTML=`<h1>Обучение</h1>
-  <div class="card"><label>План на неделю: сколько видео по каждой игре</label><div class="row" style="margin:0">
+  ${lookCard()}<div class="card"><label>План на неделю: сколько видео по каждой игре</label><div class="row" style="margin:0">
   <input id="ga" type="number" value="${s.goal_arizona??4}"><span class="mu">Arizona</span><input id="gg" type="number" value="${s.goal_grand??3}"><span class="mu">Grand</span></div></div>
   <div class="card"><label>Ограничения съёмки для идей</label><textarea id="lm" rows="3">${esc(s.limits)}</textarea></div>
   <div class="card"><label>Описание твоего стиля</label><textarea id="sn" rows="8">${esc(s.style_notes)}</textarea>
@@ -254,6 +294,16 @@ $("#v").onclick=e=>{
     const ids=S.ideas.filter(i=>i.status==="idea"&&(d.all?i.game===d.all:!["arizona","grand"].includes(i.game))).map(i=>i.id);
     const on=ids.every(x=>SEL.has(x));ids.forEach(x=>on?SEL.delete(x):SEL.add(x));render();
   }
+  if(d.iv){IV=d.iv;render()}
+  if(d.lt)run(b,async()=>{await call("idea_update",{id:+d.lt,status:"later"});await load()});
+  if(d.bk)run(b,async()=>{await call("idea_update",{id:+d.bk,status:"idea"});await load()});
+  if(d.rw){const t=b.parentElement.querySelector("input").value.trim();
+    run(b,async()=>{if(!t)throw new Error("Напиши, что изменить");await call("idea_revise",{id:+d.rw,instruction:t});await load()})}
+  if(d.len){sec=Math.max(15,Math.min(90,sec+(d.len==="+"?10:-10)));
+    run(b,()=>rewrite(d.len==="+"?"Сделай сценарий длиннее примерно на 10 секунд озвучки (около 25 слов): добавь деталей и ход событий, сохрани начало и финал. Сценарий должен остаться завершённым.":"Сделай сценарий короче примерно на 10 секунд озвучки (около 25 слов): убери лишнее, сохрани суть и финал. Сценарий должен остаться завершённым."))}
+  if(d.ac){LS.set("ac",d.ac);applyLook()}
+  if(d.th){LS.set("th",d.th);applyLook();render()}
+  if(d.an){LS.set("an",LS.get("an","1")==="1"?"0":"1");applyLook();render()}
   if(d.vf!==undefined){vf=d.vf;render()}
   if(d.q){const r=$("#rv");r.value=(r.value?r.value+"; ":"")+d.q.toLowerCase()}
 };
