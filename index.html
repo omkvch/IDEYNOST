@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shorts</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#000;--card:#1c1c1e;--line:#2c2c2e;--tx:#fff;--mu:#8e8e93;--ac:#0a84ff}
+:root.light{--bg:#f2f2f7;--card:#fff;--line:#e5e5ea;--tx:#000;--mu:#6c6c70;--ac:#007aff}
+*{box-sizing:border-box}
+body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 36px) 16px calc(env(safe-area-inset-bottom) + 150px);max-width:760px}
+h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 18px}
+.card{background:var(--card);border-radius:20px;padding:14px;margin-bottom:12px}
+textarea,input,select{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;resize:vertical;min-width:0}
+input[type=number]{width:80px}
+.row{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.row select{flex:1}
+button,a.g{font:inherit;font-weight:600;border:0;border-radius:14px;padding:10px 16px;background:var(--line);color:var(--tx);cursor:pointer;text-decoration:none;display:inline-block}
+button:disabled{opacity:.5}
+.g{padding:7px 12px;font-size:14px}
+.g.on{background:var(--ac);color:#fff}
+.p{background:var(--ac);color:#fff;margin-left:auto}
+.wide{width:100%;margin:0}
+.d{color:#ff453a;margin-left:auto}
+summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.tag{font-size:13px;font-weight:500;color:var(--mu);white-space:nowrap}
+.tag.good,.st-published,.st-approved{color:#30d158}.tag.bad,.st-rejected{color:#ff453a}
+.body{white-space:pre-wrap;margin:8px 0 0}
+.mu,label{color:var(--mu);font-size:14px}
+label{display:block;margin:0 0 6px}
+.bar{height:8px;background:var(--line);border-radius:4px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac)}
+.vo{font-weight:700;margin:6px 0}
+.sb{color:#ff453a;font-size:12px;margin:2px 0}
+input[type=checkbox]{width:22px;height:22px;flex:none;margin:2px 0 0;accent-color:var(--ac)}
+.bulk{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:736px;bottom:calc(env(safe-area-inset-bottom) + 62px);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.bulk[hidden]{display:none}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:2px;padding:8px 8px calc(env(safe-area-inset-bottom) + 8px);background:var(--bg);border-top:1px solid var(--line)}
+nav button{flex:1;background:none;color:var(--mu);padding:8px 0;font-size:13px}
+nav button.on{color:var(--ac)}
+</style></head><body>
+<div id="v"></div>
+<div id="bulk" class="bulk" hidden></div>
+<nav><button data-t="ideas">Идеи</button><button data-t="videos">Видео</button><button data-t="gen">Сценарий</button><button data-t="train">Обучение</button><button data-t="news">Новости</button></nav>
+<script>
+const tg=(window.Telegram&&Telegram.WebApp)||{
+  initData:"",colorScheme:matchMedia("(prefers-color-scheme: light)").matches?"light":"dark",
+  ready(){},expand(){},showAlert:m=>alert(m),showConfirm:(m,cb)=>cb(confirm(m)),
+  HapticFeedback:{notificationOccurred(){}}};
+tg.ready();tg.expand();
+if(tg.colorScheme==="light")document.documentElement.classList.add("light");
+const API="https://afwmqjspshnuzcdgcqxa.supabase.co/functions/v1/api"; // замени после настройки Supabase
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const R={good:"Зашёл",ok:"Средне",bad:"Не зашёл"};
+const GAMES={"":"Обе игры",arizona:"Arizona",grand:"Grand"};
+const ST={idea:"Идея",writing:"Пишу",review:"На апруве",rejected:"Отклонена",approved:"Одобрена",filmed:"Снято",edited:"Смонтировано",published:"Выложено"};
+let S={scripts:[],news:[],ideas:[],sources:[],settings:{style_notes:"",glossary:"",formats:"",limits:"",goal_arizona:4,goal_grand:3}};
+let tab="ideas",last="",pre="",cur=null,ed=false,sec=40,vf="",F={game:"",format:"",n:20},SEL=new Set(),O={src:false};
+
+async function call(action,data={}){
+  const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json","x-init-data":tg.initData},body:JSON.stringify({action,...data})});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||"Ошибка сервера");return d;
+}
+async function run(btn,fn){
+  const t=btn.textContent;btn.disabled=true;btn.textContent="Подожди...";
+  try{await fn()}catch(e){tg.showAlert(e.message)}
+  btn.disabled=false;btn.textContent=t;
+}
+async function load(){const d=await call("list");S={...S,...d,settings:d.settings||S.settings};render()}
+const fmts=()=>(S.settings.formats||"").split("\n").map(s=>s.trim()).filter(Boolean);
+const fname=l=>l.split(" — ")[0];
+const sel=(id,o,v)=>`<select id="${id}">${o.map(([k,t])=>`<option value="${esc(k)}"${k===v?" selected":""}>${esc(t)}</option>`).join("")}</select>`;
+const gameSel=()=>sel("fg",Object.entries(GAMES),F.game);
+const fmtSel=()=>sel("ff",[["","Любой формат"],...fmts().map(l=>[l,fname(l)])],F.format);
+const grab=()=>{
+  if($("#fg"))F.game=$("#fg").value;if($("#ff"))F.format=$("#ff").value;if($("#fn"))F.n=$("#fn").value;
+  if($("#sec"))sec=+$("#sec").value||40;
+  if($("#sn"))Object.assign(S.settings,{style_notes:$("#sn").value,glossary:$("#gl").value,formats:$("#fm").value,limits:$("#lm").value,goal_arizona:+$("#ga").value||0,goal_grand:+$("#gg").value||0});
+};
+const day=d=>d?new Date(d).toLocaleDateString("ru",{day:"numeric",month:"short"}):"";
+const first=b=>b.split("\n")[0].slice(0,60);
+const weekStart=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d};
+const wk=g=>S.ideas.filter(i=>i.status==="published"&&i.done_at&&new Date(i.done_at)>=weekStart()&&(!g||i.game===g)).length;
+
+// Озвучка капсом, раскадровка (строки в квадратных скобках) мелким красным
+const isSb=l=>/^\s*\[/.test(l);
+const lines=t=>t.split("\n").filter(l=>l.trim());
+const scriptHtml=t=>lines(t).map(l=>isSb(l)?`<div class="sb">${esc(l)}</div>`:`<div class="vo">${esc(l.toUpperCase())}</div>`).join("");
+const scriptRich=t=>lines(t).map(l=>isSb(l)?`<p style="margin:0;color:#ff0000;font-size:9pt">${esc(l)}</p>`:`<p style="margin:0;font-weight:bold">${esc(l.toUpperCase())}</p>`).join("");
+const scriptPlain=t=>t.split("\n").map(l=>isSb(l)?l:l.toUpperCase()).join("\n");
+async function copyScript(t){
+  try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([scriptRich(t)],{type:"text/html"}),"text/plain":new Blob([scriptPlain(t)],{type:"text/plain"})})])}
+  catch{try{await navigator.clipboard.writeText(scriptPlain(t))}catch{}}
+  tg.HapticFeedback.notificationOccurred("success");
+}
+async function saveScript(status){
+  if(ed&&$("#res"))last=$("#res").value;
+  const c=S.ideas.find(i=>i.id===cur);
+  if(cur){const st=status||(c&&c.status==="idea"?"writing":undefined);await call("idea_update",{id:cur,script:last,...(st?{status:st}:{})})}
+  else{cur=(await call("idea_add",{title:first(pre||last),angle:pre,script:last,game:F.game,format:F.format,status:status||"writing",source:"manual"})).id}
+  await load();
+}
+function openIdea(id){
+  const i=S.ideas.find(x=>x.id===id);
+  pre=[i.title,i.summary,i.angle].filter(Boolean).join("\n");cur=id;last=i.script||"";ed=false;
+  if(i.format)F.format=i.format;if(i.game)F.game=i.game;tab="gen";render();
+}
+
+function updateBulk(){
+  const b=$("#bulk"),ids=[...SEL].filter(id=>S.ideas.some(i=>i.id===id&&i.status==="idea"));
+  b.hidden=!(tab==="ideas"&&ids.length);if(b.hidden)return;
+  b.innerHTML=`<b>Выбрано: ${ids.length}</b><span class="row" style="margin:0"><button class="g" id="bc">Снять</button><button class="g on" id="bw">Писать сценарии</button></span>`;
+  $("#bc").onclick=()=>{SEL.clear();render()};
+  $("#bw").onclick=e=>run(e.target,()=>batchWrite(ids,e.target));
+}
+// Сценарии для всех выбранных идей, по три одновременно
+async function batchWrite(ids,btn){
+  const q=[...ids],fails=[];let n=0;
+  const worker=async()=>{while(q.length){
+    const id=q.shift(),i=S.ideas.find(x=>x.id===id);
+    try{
+      const text=(await call("generate",{idea:[i.title,i.summary,i.angle].filter(Boolean).join("\n"),sec,game:i.game,format:i.format?fname(i.format):""})).text;
+      await call("idea_update",{id,script:text,status:"writing"});SEL.delete(id);
+    }catch(e){fails.push(i.title)}
+    btn.textContent=`Готово ${++n} из ${ids.length}`;
+  }};
+  await Promise.all([worker(),worker(),worker()]);
+  vf="writing";tab="videos";await load();
+  if(fails.length)tg.showAlert(`Не удалось написать: ${fails.length}. Эти идеи остались в списке, попробуй ещё раз.`);
+}
+
+const V={
+ideas(v){
+  const list=S.ideas.filter(i=>i.status==="idea");
+  const card=i=>`<details class="card"><summary><input type="checkbox" data-ck="${i.id}"${SEL.has(i.id)?" checked":""}>
+  <div style="flex:1"><b>${esc(i.title)}</b><div class="mu">${esc(i.summary)}</div><div class="tag">${esc(i.format?fname(i.format):"")}</div></div></summary>
+  ${i.angle?`<p class="body">${esc(i.angle)}</p>`:""}
+  <div class="row"><button class="g on" data-sc="${i.id}">В сценарий</button><button class="g d" data-di="${i.id}">Удалить</button></div></details>`;
+  const grp=(k,t)=>{const l=list.filter(i=>k?i.game===k:!["arizona","grand"].includes(i.game));
+    return l.length?`<div class="row" style="justify-content:space-between;margin:14px 0 8px"><b>${t} · ${l.length}</b><button class="g" data-all="${k}">Выбрать все</button></div>`+l.map(card).join(""):""};
+  v.innerHTML=`<h1>Идеи</h1><div class="card"><div class="row" style="margin:0"><input id="qn" placeholder="Быстрая заметка: мысль для видео"><button class="g on" id="qa">Записать</button></div></div>
+  <div class="card"><div class="row" style="margin:0">${gameSel()}${fmtSel()}${sel("fn",[["10","10 идей"],["20","20 идей"],["30","30 идей"]],String(F.n))}</div>
+  <div class="row"><textarea id="hint" rows="2" placeholder="Свой повод или пожелание, например: пранк с участием друга (необязательно)"></textarea></div>
+  <div class="row"><button class="g" id="gn">По новостям</button><button class="p" id="gv">Придумать идеи</button></div>
+  <p class="mu" style="margin:10px 0 0">Если игра не выбрана, идеи делятся поровну: половина Arizona, половина Grand. Генерация занимает до минуты.</p></div>
+  ${list.length?`<div class="row" style="justify-content:space-between;margin:0 0 4px"><span class="mu">Идей в списке: ${list.length}</span><button class="g d" id="sk">Убрать невыбранные</button></div>`:""}`+
+  grp("arizona","Arizona")+grp("grand","Grand")+grp("","Без игры");
+  $("#qa").onclick=e=>run(e.target,async()=>{const t=$("#qn").value.trim();if(!t)return;grab();
+    await call("idea_add",{title:t,game:F.game,source:"note"});await load();$("#qn").focus()});
+  $("#qn").onkeydown=e=>{if(e.key==="Enter")$("#qa").click()};
+  const gen=mode=>e=>run(e.target,async()=>{grab();
+    await call("ideas",{mode,game:F.game,format:F.format,hint:$("#hint").value,n:mode==="news"?8:+F.n});await load()});
+  $("#gn").onclick=gen("news");$("#gv").onclick=gen("creative");
+  if($("#sk"))$("#sk").onclick=()=>tg.showConfirm(SEL.size?"Убрать все невыбранные идеи?":"Убрать все идеи из списка?",
+    ok=>{if(ok)call("ideas_skip",{keep:[...SEL]}).then(load).catch(x=>tg.showAlert(x.message))});
+},
+videos(v){
+  const gA=+S.settings.goal_arizona||0,gG=+S.settings.goal_grand||0,done=wk();
+  const list=S.ideas.filter(i=>i.status!=="idea"&&i.status!=="skipped"&&(!vf||i.status===vf));
+  const vs=Object.entries(ST).filter(([k])=>k!=="idea");
+  v.innerHTML=`<h1>Видео</h1><div class="card"><div class="row" style="margin:0;justify-content:space-between"><b>Неделя: ${done} из ${gA+gG}</b>
+  <span class="tag">Arizona ${wk("arizona")}/${gA} · Grand ${wk("grand")}/${gG}</span></div>
+  <div class="bar"><i style="width:${gA+gG?Math.min(100,done/(gA+gG)*100):0}%"></i></div></div>
+  <div class="row" style="margin:0 0 12px">${[["","Все"],...vs].map(([k,t])=>`<button class="g ${vf===k?"on":""}" data-vf="${k}">${t}${k?" "+S.ideas.filter(i=>i.status===k).length:""}</button>`).join("")}</div>`+
+  list.map(i=>`<details class="card"><summary><div><b>${esc(i.title)}</b><div class="tag">${GAMES[i.game]||""}</div></div><span class="tag st-${i.status}">${ST[i.status]}</span></summary>
+  <div class="row"><select data-ss="${i.id}">${vs.map(([k,t])=>`<option value="${k}"${k===i.status?" selected":""}>${t}</option>`).join("")}</select>
+  <button class="g on" data-sc="${i.id}">Открыть</button></div>
+  ${i.script?`<div style="margin-top:10px">${scriptHtml(i.script)}</div>`:""}
+  <div class="row"><textarea data-nt="${i.id}" rows="2" placeholder="Комментарий, например причина отклонения">${esc(i.note)}</textarea></div>
+  <div class="row"><button class="g d" data-di="${i.id}">Удалить</button></div></details>`).join("");
+},
+gen(v){
+  const c=S.ideas.find(i=>i.id===cur);
+  v.innerHTML=`<h1>Сценарий</h1><div class="card">${c?`<div class="tag" style="margin-bottom:8px">Видео: ${esc(c.title)}</div>`:""}
+  <div class="row" style="margin:0">${gameSel()}${fmtSel()}</div>
+  <div class="row"><textarea id="idea" rows="5" placeholder="Идея: о чём видео">${esc(pre)}</textarea></div>
+  <div class="row"><input id="sec" type="number" value="${sec}" min="15" max="90"><span class="mu">секунд</span><button class="p" id="gen">Написать</button></div></div>`+
+  (last?`<div class="card">${ed?`<textarea id="res" rows="16">${esc(last)}</textarea>`:`<div>${scriptHtml(last)}</div>`}
+  <div class="row"><button class="g" id="ted">${ed?"Готово":"Править текстом"}</button><button class="g" id="cp">Копировать</button>
+  <button class="g" id="sv">Сохранить</button><button class="g on" id="ap">На апрув</button></div></div>
+  <div class="card"><label>Что поправить в сценарии</label><textarea id="rv" rows="2" placeholder="Например: сделай хук жёстче, а концовку смешнее"></textarea>
+  <div class="row">${["Короче","Жёстче хук","Смешнее","Другая концовка"].map(t=>`<button class="g" data-q="${t}">${t}</button>`).join("")}<button class="p" id="rw">Переписать</button></div></div>`:"");
+  $("#idea").oninput=e=>pre=e.target.value;
+  const make=revise=>e=>run(e.target,async()=>{grab();
+    if(ed&&$("#res"))last=$("#res").value;
+    if(!pre.trim())throw new Error("Опиши идею");
+    if(revise&&!$("#rv").value.trim())throw new Error("Напиши, что поправить");
+    last=(await call("generate",{idea:pre,sec,game:F.game,format:F.format?fname(F.format):"",...(revise?{script:last,revise:$("#rv").value}:{})})).text;
+    ed=false;cur?await saveScript():render()});
+  $("#gen").onclick=make(false);
+  if(last){
+    $("#ted").onclick=()=>{if(ed&&$("#res"))last=$("#res").value;ed=!ed;render()};
+    $("#cp").onclick=()=>{if(ed&&$("#res"))last=$("#res").value;copyScript(last)};
+    $("#sv").onclick=e=>run(e.target,()=>saveScript());
+    $("#ap").onclick=e=>run(e.target,async()=>{await saveScript("review");tg.showAlert("Видео отправлено на апрув")});
+    $("#rw").onclick=make(true);
+  }
+},
+news(v){
+  const ns=S.news.filter(n=>!F.game||n.game===F.game);
+  v.innerHTML=`<h1>Новости</h1><details class="card"${O.src?" open":""}><summary><b>Источники</b><span class="tag">${S.sources.length}</span></summary>
+  ${S.sources.map(s=>`<div class="row"><span>@${esc(s.channel)}</span><span class="tag">${GAMES[s.game]}</span><button class="g d" data-sd="${s.id}">Удалить</button></div>`).join("")}
+  <div class="row"><input id="sc" placeholder="@канал или ссылка t.me"><select id="sg"><option value="arizona">Arizona</option><option value="grand">Grand</option></select>
+  <button class="g on" id="sa">Добавить</button></div></details>
+  <div class="row" style="margin:0 0 12px">${gameSel()}<button class="p" id="nr">Обновить</button></div>`+
+  ns.map(n=>`<details class="card"><summary><b>${esc(first(n.text))}</b><span class="tag">${GAMES[n.game]} · ${day(n.posted_at)}</span></summary>
+  <p class="body">${esc(n.text)}</p><div class="row"><button class="g on" data-ns="${n.id}">Идея по новости</button>
+  <a class="g" href="${esc(n.url)}" target="_blank">Открыть</a></div></details>`).join("");
+  $("#fg").onchange=()=>{grab();render()};
+  $("#sa").onclick=e=>run(e.target,async()=>{O.src=true;await call("source_add",{channel:$("#sc").value,game:$("#sg").value});await load()});
+  $("#nr").onclick=e=>run(e.target,async()=>{const r=await call("news_refresh");await load();if(r.errs.length)tg.showAlert(r.errs.join("\n"))});
+},
+train(v){
+  const s=S.settings;
+  v.innerHTML=`<h1>Обучение</h1>
+  <div class="card"><label>План на неделю: сколько видео по каждой игре</label><div class="row" style="margin:0">
+  <input id="ga" type="number" value="${s.goal_arizona??4}"><span class="mu">Arizona</span><input id="gg" type="number" value="${s.goal_grand??3}"><span class="mu">Grand</span></div></div>
+  <div class="card"><label>Ограничения съёмки для идей</label><textarea id="lm" rows="3">${esc(s.limits)}</textarea></div>
+  <div class="card"><label>Описание твоего стиля</label><textarea id="sn" rows="8">${esc(s.style_notes)}</textarea>
+  <div class="row"><button class="g" id="an">Определить по моим сценариям</button></div></div>
+  <div class="card"><label>Глоссарий: сленг, названия, механики игр</label><textarea id="gl" rows="8">${esc(s.glossary)}</textarea></div>
+  <div class="card"><label>Форматы (по строке: Название — описание)</label><textarea id="fm" rows="8">${esc(s.formats)}</textarea></div>
+  <button class="p wide" id="ss">Сохранить</button>
+  <h1 style="margin-top:28px">Библиотека</h1><div class="card">
+  <textarea id="nb" rows="6" placeholder="Вставь сценарий. Несколько сценариев раздели строкой ---"></textarea>
+  <div class="row"><select id="nr2">${Object.entries(R).map(([k,t])=>`<option value="${k}">${t}</option>`).join("")}</select>
+  <button class="p" id="add">Добавить</button></div></div><p class="mu">Сценариев: ${S.scripts.length}</p>`+
+  S.scripts.map(x=>`<details class="card"><summary><b>${esc(x.title)}</b><span class="tag ${x.rating}">${R[x.rating]}</span></summary>
+  <p class="body">${esc(x.body)}</p><div class="row">
+  ${Object.entries(R).map(([k,t])=>`<button class="g ${x.rating===k?"on":""}" data-rate="${x.id}:${k}">${t}</button>`).join("")}
+  <button class="g d" data-del="${x.id}">Удалить</button></div></details>`).join("");
+  $("#an").onclick=e=>run(e.target,async()=>{grab();S.settings.style_notes=(await call("analyze")).style_notes;render()});
+  $("#ss").onclick=e=>run(e.target,async()=>{grab();await call("save_settings",S.settings);tg.showAlert("Сохранено")});
+  $("#add").onclick=e=>run(e.target,async()=>{
+    const items=$("#nb").value.split(/\n\s*-{3,}\s*\n/).map(t=>t.trim()).filter(Boolean).map(body=>({body,title:first(body)}));
+    if(!items.length)throw new Error("Вставь текст сценария");
+    grab();await call("add",{items,rating:$("#nr2").value});await load()});
+}};
+function render(){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
+  V[tab]($("#v"));updateBulk();
+}
+$("#v").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;const d=b.dataset,id=+(d.sc||d.di||d.ns||d.sd||d.del||0);
+  if(d.rate){const[i,r]=d.rate.split(":");run(b,async()=>{await call("rate",{id:+i,rating:r});await load()})}
+  if(d.del)tg.showConfirm("Удалить сценарий?",ok=>{if(ok)run(b,async()=>{await call("delete",{id});await load()})});
+  if(d.sc)openIdea(id);
+  if(d.di)tg.showConfirm("Удалить?",ok=>{if(ok)run(b,async()=>{if(cur===id)cur=null;await call("idea_delete",{id});await load()})});
+  if(d.ns)run(b,async()=>{grab();await call("ideas",{mode:"news",newsId:id,format:F.format,n:5,hint:""});tab="ideas";await load()});
+  if(d.sd)run(b,async()=>{O.src=true;await call("source_del",{id});await load()});
+  if(d.all!==undefined){
+    const ids=S.ideas.filter(i=>i.status==="idea"&&(d.all?i.game===d.all:!["arizona","grand"].includes(i.game))).map(i=>i.id);
+    const on=ids.every(x=>SEL.has(x));ids.forEach(x=>on?SEL.delete(x):SEL.add(x));render();
+  }
+  if(d.vf!==undefined){vf=d.vf;render()}
+  if(d.q){const r=$("#rv");r.value=(r.value?r.value+"; ":"")+d.q.toLowerCase()}
+};
+$("#v").onchange=e=>{
+  const t=e.target,d=t.dataset;
+  const upd=f=>call("idea_update",f).then(load).catch(x=>tg.showAlert(x.message));
+  if(d.ss)upd({id:+d.ss,status:t.value});
+  if(d.nt)upd({id:+d.nt,note:t.value});
+  if(d.ck){const id=+d.ck;t.checked?SEL.add(id):SEL.delete(id);updateBulk()}
+};
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{grab();O.src=false;tab=b.dataset.t;render()});
+render();
+load().catch(e=>tg.showAlert(tg.initData?e.message:"Данные загружаются только внутри Telegram. Открой приложение через кнопку меню бота."));
+</script></body></html>
