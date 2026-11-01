@@ -42,13 +42,14 @@ nav button.on{color:var(--ac)}
 <div id="bulk" class="bulk" hidden></div>
 <nav><button data-t="ideas">Идеи</button><button data-t="videos">Видео</button><button data-t="gen">Сценарий</button><button data-t="train">Обучение</button><button data-t="news">Новости</button></nav>
 <script>
+window.onerror=m=>{document.getElementById("v").innerHTML='<p style="color:#ff453a;padding:12px">Ошибка в приложении: '+m+'</p>'};
 const tg=(window.Telegram&&Telegram.WebApp)||{
   initData:"",colorScheme:matchMedia("(prefers-color-scheme: light)").matches?"light":"dark",
   ready(){},expand(){},showAlert:m=>alert(m),showConfirm:(m,cb)=>cb(confirm(m)),
   HapticFeedback:{notificationOccurred(){}}};
 tg.ready();tg.expand();
 if(tg.colorScheme==="light")document.documentElement.classList.add("light");
-const API="const API="https://afwmqjspshnuzcdgcqxa.supabase.co/functions/v1/smooth-handler";
+const API="https://afwmqjspshnuzcdgcqxa.supabase.co/functions/v1/smooth-handler";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const R={good:"Зашёл",ok:"Средне",bad:"Не зашёл"};
