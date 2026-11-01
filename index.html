@@ -48,7 +48,7 @@ const tg=(window.Telegram&&Telegram.WebApp)||{
   HapticFeedback:{notificationOccurred(){}}};
 tg.ready();tg.expand();
 if(tg.colorScheme==="light")document.documentElement.classList.add("light");
-const API="https://afwmqjspshnuzcdgcqxa.supabase.co/functions/v1/api"; // замени после настройки Supabase
+const API="const API="https://afwmqjspshnuzcdgcqxa.supabase.co/functions/v1/smooth-handler";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const R={good:"Зашёл",ok:"Средне",bad:"Не зашёл"};
